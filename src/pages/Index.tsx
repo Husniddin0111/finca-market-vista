@@ -1,139 +1,49 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Header from '../components/Header';
 import ProductTable from '../components/ProductTable';
 import Pagination from '../components/Pagination';
+import AirtableConfig from '../components/AirtableConfig';
+import { useAirtableData } from '../hooks/useAirtableData';
 import { useToast } from '../hooks/use-toast';
-
-// Sample coffee data
-const coffeeData = [
-  {
-    id: 1,
-    supplier: "John Wick",
-    farm: "Sweet & Flowers",
-    variety: "Pink Bourbon",
-    flavors: "Sweet Chocolate, Honey, Citric, Floral, Fruity",
-    origin: "Huila",
-    stockKg: 1000,
-    scaa: 85,
-    price: 5
-  },
-  {
-    id: 2,
-    supplier: "James Alen",
-    farm: "La Cereza",
-    variety: "Pink Bourbon", 
-    flavors: "Panela, Chocolate, Cocoa, Beer, Clean",
-    origin: "Huila - El Tablon",
-    stockKg: 40,
-    scaa: 87,
-    price: 4
-  },
-  {
-    id: 3,
-    supplier: "Robert Richard",
-    farm: "La Natura",
-    variety: "Geisha",
-    flavors: "Honey, Panela, Orange",
-    origin: "Huila",
-    stockKg: 574,
-    scaa: 88,
-    price: 5
-  },
-  {
-    id: 4,
-    supplier: "Linda Elizabeth",
-    farm: "Buena Vista",
-    variety: "Pink Bourbon",
-    flavors: "Cacao Nibs, Orange, Citrus, Tangerine, Silky, Clean",
-    origin: "Huila",
-    stockKg: 345,
-    scaa: 88,
-    price: 5
-  },
-  {
-    id: 5,
-    supplier: "Mary Susan",
-    farm: "La Miel",
-    variety: "Geisha",
-    flavors: "Floral, Panela, Floral",
-    origin: "Huila",
-    stockKg: 1234,
-    scaa: 85,
-    price: 5
-  },
-  {
-    id: 6,
-    supplier: "Sarah Lisa",
-    farm: "Juranambu",
-    variety: "Pink Bourbon",
-    flavors: "Cherry, Honey",
-    origin: "Huila - San Agustin",
-    stockKg: 1200,
-    scaa: 85.5,
-    price: 9.8
-  },
-  {
-    id: 7,
-    supplier: "Joseph William",
-    farm: "La Natura",
-    variety: "Wush Wush",
-    flavors: "High Acidity, Honey",
-    origin: "Huila - El Tablon",
-    stockKg: 987,
-    scaa: 88,
-    price: 50
-  },
-  {
-    id: 8,
-    supplier: "Sandra Betty",
-    farm: "Juranambu",
-    variety: "Caturra",
-    flavors: "Clean, Honey",
-    origin: "Huila - San Agustin",
-    stockKg: 786,
-    scaa: 85,
-    price: 7
-  },
-  {
-    id: 9,
-    supplier: "Steven Andrew",
-    farm: "Juranambu",
-    variety: "Caturra",
-    flavors: "Balanced, Honey, Silky",
-    origin: "Huila - El Tablon",
-    stockKg: 5000,
-    scaa: 86,
-    price: 5
-  },
-  {
-    id: 10,
-    supplier: "Paul Donna",
-    farm: "La Natura",
-    variety: "Geisha",
-    flavors: "Fruity, Honey, Milky, Delicate Jam, Clean",
-    origin: "Huila - San Agustin",
-    stockKg: 4044,
-    scaa: 89,
-    price: 4.5
-  }
-];
 
 const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('');
-  const [filterBy, setFilterBy] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const [showFilters, setShowFilters] = useState(false);
-  const [priceRange, setPriceRange] = useState([0, 100]);
   const [selectedOrigin, setSelectedOrigin] = useState('');
   const [selectedVariety, setSelectedVariety] = useState('');
+  const [priceRange, setPriceRange] = useState([0, 100]);
+  const [showFilters, setShowFilters] = useState(false);
   const { toast } = useToast();
 
-  const itemsPerPage = 10;
+  // Airtable configuration
+  const [baseId, setBaseId] = useState(localStorage.getItem('airtable_base_id') || '');
+  const [apiKey, setApiKey] = useState(localStorage.getItem('airtable_api_key') || '');
+  const [isConfigured, setIsConfigured] = useState(false);
+
+  const {
+    records,
+    loading,
+    error,
+    currentPage,
+    hasNextPage,
+    goToPage,
+    goToNextPage,
+    goToPrevPage
+  } = useAirtableData(baseId, apiKey);
+
+  useEffect(() => {
+    setIsConfigured(!!(baseId && apiKey));
+  }, [baseId, apiKey]);
+
+  const handleConfigSave = (newBaseId: string, newApiKey: string) => {
+    setBaseId(newBaseId);
+    setApiKey(newApiKey);
+    setIsConfigured(true);
+  };
 
   // Filter and search logic
-  const filteredData = coffeeData.filter(item => {
+  const filteredData = records.filter(item => {
     const matchesSearch = searchTerm === '' || 
       Object.values(item).some(value => 
         value.toString().toLowerCase().includes(searchTerm.toLowerCase())
@@ -157,12 +67,7 @@ const Index = () => {
     return 0;
   });
 
-  // Pagination logic
-  const totalPages = Math.ceil(sortedData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedData = sortedData.slice(startIndex, startIndex + itemsPerPage);
-
-  const handleAddToCart = (product) => {
+  const handleAddToCart = (product: any) => {
     toast({
       title: "Added to Cart",
       description: `${product.farm} ${product.variety} has been added to your cart.`,
@@ -175,8 +80,15 @@ const Index = () => {
     setSelectedOrigin('');
     setSelectedVariety('');
     setPriceRange([0, 100]);
-    setCurrentPage(1);
   };
+
+  if (!isConfigured) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <AirtableConfig onConfigSave={handleConfigSave} isConfigured={isConfigured} />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -194,22 +106,54 @@ const Index = () => {
         selectedVariety={selectedVariety}
         setSelectedVariety={setSelectedVariety}
         resetFilters={resetFilters}
-        coffeeData={coffeeData}
+        coffeeData={records}
       />
 
       <main className="container mx-auto px-4 py-8">
-        <ProductTable 
-          data={paginatedData}
-          onAddToCart={handleAddToCart}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-        />
+        <AirtableConfig onConfigSave={handleConfigSave} isConfigured={isConfigured} />
 
-        <Pagination 
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={setCurrentPage}
-        />
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded mb-4">
+            {error}
+          </div>
+        )}
+
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-gray-500">Loading data from Airtable...</p>
+          </div>
+        ) : (
+          <>
+            <ProductTable 
+              data={sortedData}
+              onAddToCart={handleAddToCart}
+              sortBy={sortBy}
+              setSortBy={setSortBy}
+            />
+
+            <div className="flex justify-center items-center space-x-4 mt-8">
+              <button
+                onClick={goToPrevPage}
+                disabled={currentPage === 1}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
+              >
+                Previous
+              </button>
+              
+              <span className="text-gray-700">
+                Page {currentPage}
+              </span>
+              
+              <button
+                onClick={goToNextPage}
+                disabled={!hasNextPage}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          </>
+        )}
       </main>
 
       <footer className="mt-16 py-8 border-t border-gray-200 bg-white">
