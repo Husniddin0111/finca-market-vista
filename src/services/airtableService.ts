@@ -20,7 +20,7 @@ export interface AirtableResponse {
 
 export class AirtableService {
   private baseUrl: string = 'https://api.airtable.com/v0/appnc5K3ijuJIrNqn/stock';
-  private apiKey: string = 'patMHLpDLsTJlKJ3Y';
+  private apiKey: string = 'patlA5ApKpEDGVeWJ.a75203c8e393a2a95b4ef847004d1bbd700fc189f8b9f8e6a2474e7d4bbcca18';
 
   async fetchRecords(offset?: string, pageSize: number = 10): Promise<AirtableResponse> {
     const params = new URLSearchParams({
