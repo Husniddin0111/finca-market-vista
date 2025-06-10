@@ -38,8 +38,8 @@ const Header = ({
   coffeeData
 }) => {
   // Get unique values for filter options
-  const origins = [...new Set(coffeeData.map(item => item.origin))];
-  const varieties = [...new Set(coffeeData.map(item => item.variety))];
+  const origins: string[] = [...new Set(coffeeData.map((item: any) => item.origin))];
+  const varieties: string[] = [...new Set(coffeeData.map((item: any) => item.variety))];
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
@@ -133,7 +133,7 @@ const Header = ({
                         <SelectValue placeholder="Select origin" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Origins</SelectItem>
+                        <SelectItem value="all">All Origins</SelectItem>
                         {origins.map(origin => (
                           <SelectItem key={origin} value={origin}>{origin}</SelectItem>
                         ))}
@@ -149,7 +149,7 @@ const Header = ({
                         <SelectValue placeholder="Select variety" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Varieties</SelectItem>
+                        <SelectItem value="all">All Varieties</SelectItem>
                         {varieties.map(variety => (
                           <SelectItem key={variety} value={variety}>{variety}</SelectItem>
                         ))}

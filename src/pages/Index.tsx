@@ -140,8 +140,8 @@ const Index = () => {
       );
     
     const matchesPrice = item.price >= priceRange[0] && item.price <= priceRange[1];
-    const matchesOrigin = selectedOrigin === '' || item.origin.includes(selectedOrigin);
-    const matchesVariety = selectedVariety === '' || item.variety === selectedVariety;
+    const matchesOrigin = selectedOrigin === '' || selectedOrigin === 'all' || item.origin.includes(selectedOrigin);
+    const matchesVariety = selectedVariety === '' || selectedVariety === 'all' || item.variety === selectedVariety;
     
     return matchesSearch && matchesPrice && matchesOrigin && matchesVariety;
   });
