@@ -19,13 +19,8 @@ export interface AirtableResponse {
 }
 
 export class AirtableService {
-  private baseUrl: string;
-  private apiKey: string;
-
-  constructor(baseId: string, apiKey: string) {
-    this.baseUrl = `https://api.airtable.com/v0/${baseId}/stock`;
-    this.apiKey = apiKey;
-  }
+  private baseUrl: string = 'https://api.airtable.com/v0/appnc5K3ijuJIrNqn/stock';
+  private apiKey: string = 'patMHLpDLsTJlKJ3Y';
 
   async fetchRecords(offset?: string, pageSize: number = 10): Promise<AirtableResponse> {
     const params = new URLSearchParams({

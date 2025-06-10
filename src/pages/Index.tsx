@@ -1,9 +1,7 @@
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Header from '../components/Header';
 import ProductTable from '../components/ProductTable';
-import Pagination from '../components/Pagination';
-import AirtableConfig from '../components/AirtableConfig';
 import { useAirtableData } from '../hooks/useAirtableData';
 import { useToast } from '../hooks/use-toast';
 
@@ -16,11 +14,6 @@ const Index = () => {
   const [showFilters, setShowFilters] = useState(false);
   const { toast } = useToast();
 
-  // Airtable configuration
-  const [baseId, setBaseId] = useState(localStorage.getItem('airtable_base_id') || '');
-  const [apiKey, setApiKey] = useState(localStorage.getItem('airtable_api_key') || '');
-  const [isConfigured, setIsConfigured] = useState(false);
-
   const {
     records,
     loading,
@@ -30,17 +23,7 @@ const Index = () => {
     goToPage,
     goToNextPage,
     goToPrevPage
-  } = useAirtableData(baseId, apiKey);
-
-  useEffect(() => {
-    setIsConfigured(!!(baseId && apiKey));
-  }, [baseId, apiKey]);
-
-  const handleConfigSave = (newBaseId: string, newApiKey: string) => {
-    setBaseId(newBaseId);
-    setApiKey(newApiKey);
-    setIsConfigured(true);
-  };
+  } = useAirtableData();
 
   // Filter and search logic
   const filteredData = records.filter(item => {
@@ -82,14 +65,6 @@ const Index = () => {
     setPriceRange([0, 100]);
   };
 
-  if (!isConfigured) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <AirtableConfig onConfigSave={handleConfigSave} isConfigured={isConfigured} />
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Header 
@@ -110,8 +85,6 @@ const Index = () => {
       />
 
       <main className="container mx-auto px-4 py-8">
-        <AirtableConfig onConfigSave={handleConfigSave} isConfigured={isConfigured} />
-
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded mb-4">
             {error}

@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { Search, Filter, ArrowDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,23 @@ import { Label } from '@/components/ui/label';
 import { Slider } from '@/components/ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
+interface HeaderProps {
+  searchTerm: string;
+  setSearchTerm: (term: string) => void;
+  sortBy: string;
+  setSortBy: (sortBy: string) => void;
+  showFilters: boolean;
+  setShowFilters: (show: boolean) => void;
+  priceRange: number[];
+  setPriceRange: (range: number[]) => void;
+  selectedOrigin: string;
+  setSelectedOrigin: (origin: string) => void;
+  selectedVariety: string;
+  setSelectedVariety: (variety: string) => void;
+  resetFilters: () => void;
+  coffeeData: any[];
+}
+
 const Header = ({
   searchTerm,
   setSearchTerm,
@@ -35,10 +53,10 @@ const Header = ({
   setSelectedVariety,
   resetFilters,
   coffeeData
-}) => {
+}: HeaderProps) => {
   // Get unique values for filter options
-  const origins: string[] = [...new Set(coffeeData.map((item: any) => item.origin))];
-  const varieties: string[] = [...new Set(coffeeData.map((item: any) => item.variety))];
+  const origins: string[] = [...new Set(coffeeData.map((item: any) => item.origin).filter(Boolean))];
+  const varieties: string[] = [...new Set(coffeeData.map((item: any) => item.variety).filter(Boolean))];
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">

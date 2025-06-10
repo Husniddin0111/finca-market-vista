@@ -14,7 +14,7 @@ export interface TransformedRecord {
   price: number;
 }
 
-export const useAirtableData = (baseId: string, apiKey: string) => {
+export const useAirtableData = () => {
   const [records, setRecords] = useState<TransformedRecord[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -23,7 +23,7 @@ export const useAirtableData = (baseId: string, apiKey: string) => {
   const [offsets, setOffsets] = useState<string[]>(['']);
   
   const pageSize = 10;
-  const airtableService = new AirtableService(baseId, apiKey);
+  const airtableService = new AirtableService();
 
   const fetchData = async (pageIndex: number) => {
     setLoading(true);
@@ -54,10 +54,8 @@ export const useAirtableData = (baseId: string, apiKey: string) => {
   };
 
   useEffect(() => {
-    if (baseId && apiKey) {
-      fetchData(currentPage);
-    }
-  }, [baseId, apiKey, currentPage]);
+    fetchData(currentPage);
+  }, [currentPage]);
 
   const goToPage = (page: number) => {
     setCurrentPage(page);
