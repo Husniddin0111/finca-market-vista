@@ -152,24 +152,30 @@ export class AirtableService {
     try {
       console.log(`Resolving linked records for table ${tableName} with IDs:`, recordIds);
       
-      // Build filter formula to get specific records
-      const filterFormula = `OR(${recordIds.map(id => `RECORD_ID()='${id}'`).join(',')})`;
-      const params = new URLSearchParams();
-      params.append('filterByFormula', filterFormula);
-      params.append('fields[]', 'Name');
-
-      console.log(`Making request to /${tableName} with filter:`, filterFormula);
-      const response = await this.fetchFromAirtable(`/${tableName}?${params}`);
-      console.log(`Response from ${tableName}:`, response);
+      const resolvedNames: string[] = [];
       
-      // Extract names from the response
-      const names = response.records.map((record: LinkedRecord) => {
-        console.log(`Record from ${tableName}:`, record);
-        return record.fields.Name || 'Unknown';
-      });
+      // Fetch each record individually to ensure we get the names
+      for (const recordId of recordIds) {
+        try {
+          console.log(`Fetching record ${recordId} from table ${tableName}`);
+          const response = await this.fetchFromAirtable(`/${tableName}/${recordId}`);
+          console.log(`Response for ${recordId}:`, response);
+          
+          if (response && response.fields && response.fields.Name) {
+            resolvedNames.push(response.fields.Name);
+            console.log(`Resolved ${recordId} to name: ${response.fields.Name}`);
+          } else {
+            console.warn(`No name found for record ${recordId} in table ${tableName}`);
+            resolvedNames.push(recordId); // Fallback to ID if name not found
+          }
+        } catch (recordError) {
+          console.error(`Error fetching record ${recordId} from ${tableName}:`, recordError);
+          resolvedNames.push(recordId); // Fallback to ID on error
+        }
+      }
       
-      console.log(`Resolved names for ${tableName}:`, names);
-      return names;
+      console.log(`Final resolved names for ${tableName}:`, resolvedNames);
+      return resolvedNames;
     } catch (error) {
       console.error(`Error resolving linked records for table ${tableName}:`, error);
       // Return original IDs as fallback
