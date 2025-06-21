@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react';
 import { AirtableService, TransformedCoffeeRecord } from '../services/airtableService';
 
@@ -42,10 +41,9 @@ export const useAdvancedTable = () => {
     setError(null);
     
     try {
-      const response = await airtableService.fetchRecords();
-      const transformedRecords = response.records.map(record => 
-        airtableService.transformRecord(record)
-      );
+      console.log('Starting data fetch...');
+      const transformedRecords = await airtableService.fetchStockRecordsWithLinkedData();
+      console.log('Fetched records:', transformedRecords);
       setRecords(transformedRecords);
     } catch (err) {
       setError('Failed to fetch data from Airtable');
