@@ -88,19 +88,19 @@ export class AirtableService {
         response.records.map(async (record: AirtableRecord) => {
           const resolvedFields = { ...record.fields };
 
-          // Resolve suppliers
+          // Resolve suppliers (from suppliers table)
           if (record.fields.suppliers && record.fields.suppliers.length > 0) {
             const supplierNames = await this.resolveLinkedRecords(record.fields.suppliers, 'suppliers');
             resolvedFields.suppliers = supplierNames;
           }
 
-          // Resolve variety
+          // Resolve variety (from coffee_type table)
           if (record.fields.variety && record.fields.variety.length > 0) {
-            const varietyNames = await this.resolveLinkedRecords(record.fields.variety, 'variety');
+            const varietyNames = await this.resolveLinkedRecords(record.fields.variety, 'coffee_type');
             resolvedFields.variety = varietyNames;
           }
 
-          // Resolve process
+          // Resolve process (from process table)
           if (record.fields.process && record.fields.process.length > 0) {
             const processNames = await this.resolveLinkedRecords(record.fields.process, 'process');
             resolvedFields.process = processNames;
@@ -112,7 +112,7 @@ export class AirtableService {
             resolvedFields.origin = originNames;
           }
 
-          // Resolve flavors
+          // Resolve flavors (from flavors table)
           if (record.fields.flavors && record.fields.flavors.length > 0) {
             const flavorNames = await this.resolveLinkedRecords(record.fields.flavors, 'flavors');
             resolvedFields.flavors = flavorNames;
@@ -139,10 +139,9 @@ export class AirtableService {
     try {
       // Build filter formula to get specific records
       const filterFormula = `OR(${recordIds.map(id => `RECORD_ID()='${id}'`).join(',')})`;
-      const params = new URLSearchParams({
-        filterByFormula: filterFormula,
-        fields: ['Name']
-      });
+      const params = new URLSearchParams();
+      params.append('filterByFormula', filterFormula);
+      params.append('fields[]', 'Name');
 
       const response = await this.fetchFromAirtable(`/${tableName}?${params}`);
       
@@ -162,7 +161,7 @@ export class AirtableService {
       process: Array.isArray(record.fields.process) ? record.fields.process[0] || 'N/A' : 'N/A',
       scaa: record.fields.scaa || 0,
       origin: Array.isArray(record.fields.origin) ? record.fields.origin[0] || 'N/A' : 'N/A',
-      farm: record.fields.Code || 'N/A',
+      farm: Array.isArray(record.fields.suppliers) ? record.fields.suppliers[0] || 'N/A' : 'N/A',
       flavorsNotes: Array.isArray(record.fields.flavors) ? record.fields.flavors.join(', ') : 'N/A',
       stockKg: record.fields.stock_kg || 0,
       price: record.fields['Price FOB/lb'] || 0,

@@ -3,11 +3,13 @@ import React, { useState } from 'react';
 import { Search, Filter, ChevronUp, ChevronDown, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAdvancedTable } from '../hooks/useAdvancedTable';
 import FilterPanel from './FilterPanel';
 
 const AdvancedTable = () => {
   const [showFilters, setShowFilters] = useState(false);
+  const [showSortMenu, setShowSortMenu] = useState(false);
   const {
     data,
     loading,
@@ -47,6 +49,15 @@ const AdvancedTable = () => {
         {isRequested ? 'Sample requested' : 'Request Samples'}
       </Button>
     );
+  };
+
+  const handleSortSelection = (value: string) => {
+    const [key, direction] = value.split('-');
+    handleSort(key as any);
+    if (sortConfig.key === key && direction === 'desc') {
+      handleSort(key as any); // Toggle to desc
+    }
+    setShowSortMenu(false);
   };
 
   if (loading) {
@@ -94,13 +105,23 @@ const AdvancedTable = () => {
           </div>
           
           <div className="flex items-center space-x-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="flex items-center space-x-2 bg-gray-50 border-gray-200"
-            >
-              <span>Sort By</span>
-            </Button>
+            <div className="relative">
+              <Select onValueChange={handleSortSelection}>
+                <SelectTrigger className="w-32 bg-gray-50 border-gray-200">
+                  <SelectValue placeholder="Sort By" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="variety-asc">Variety A-Z</SelectItem>
+                  <SelectItem value="variety-desc">Variety Z-A</SelectItem>
+                  <SelectItem value="process-asc">Process A-Z</SelectItem>
+                  <SelectItem value="process-desc">Process Z-A</SelectItem>
+                  <SelectItem value="scaa-asc">SCAA Low-High</SelectItem>
+                  <SelectItem value="scaa-desc">SCAA High-Low</SelectItem>
+                  <SelectItem value="price-asc">Price Low-High</SelectItem>
+                  <SelectItem value="price-desc">Price High-Low</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <Button
               variant="outline"
               onClick={() => setShowFilters(!showFilters)}
