@@ -28,12 +28,12 @@ const FilterPanel = ({ filters, setFilters, uniqueValues, onClose, onReset }: Fi
       <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <div>
           <Label className="text-sm font-medium text-gray-700">Variety</Label>
-          <Select value={filters.variety} onValueChange={(value) => updateFilter('variety', value)}>
+          <Select value={filters.variety} onValueChange={(value) => updateFilter('variety', value === 'all' ? '' : value)}>
             <SelectTrigger className="mt-1">
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {uniqueValues.varieties.map(variety => (
                 <SelectItem key={variety} value={variety}>{variety}</SelectItem>
               ))}
@@ -43,12 +43,12 @@ const FilterPanel = ({ filters, setFilters, uniqueValues, onClose, onReset }: Fi
 
         <div>
           <Label className="text-sm font-medium text-gray-700">Process</Label>
-          <Select value={filters.process} onValueChange={(value) => updateFilter('process', value)}>
+          <Select value={filters.process} onValueChange={(value) => updateFilter('process', value === 'all' ? '' : value)}>
             <SelectTrigger className="mt-1">
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {uniqueValues.processes.map(process => (
                 <SelectItem key={process} value={process}>{process}</SelectItem>
               ))}
@@ -58,12 +58,12 @@ const FilterPanel = ({ filters, setFilters, uniqueValues, onClose, onReset }: Fi
 
         <div>
           <Label className="text-sm font-medium text-gray-700">Origin</Label>
-          <Select value={filters.origin} onValueChange={(value) => updateFilter('origin', value)}>
+          <Select value={filters.origin} onValueChange={(value) => updateFilter('origin', value === 'all' ? '' : value)}>
             <SelectTrigger className="mt-1">
               <SelectValue placeholder="All" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All</SelectItem>
+              <SelectItem value="all">All</SelectItem>
               {uniqueValues.origins.map(origin => (
                 <SelectItem key={origin} value={origin}>{origin}</SelectItem>
               ))}
