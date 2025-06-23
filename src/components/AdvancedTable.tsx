@@ -96,7 +96,7 @@ const AdvancedTable = () => {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 type="text"
-                placeholder="Search"
+                placeholder="Searche"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 w-80 bg-gray-50 border-gray-200"
@@ -194,7 +194,7 @@ const AdvancedTable = () => {
                   className="px-6 py-3 text-left text-sm font-medium text-gray-500 cursor-pointer hover:bg-gray-100"
                   onClick={() => handleSort('price')}
                 >
-                  Price {getSortIcon('price')}
+                  Price {getSortIcon('pric')}
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-medium text-gray-500">
                   ...
