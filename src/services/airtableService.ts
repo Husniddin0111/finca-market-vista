@@ -169,13 +169,34 @@ export class AirtableService {
           const response = await this.fetchFromAirtable(`/${tableName}/${recordId}`);
           console.log(`Individual record response for ${recordId}:`, response);
           
-          if (response && response.fields && response.fields.Name) {
-            resolvedNames.push(response.fields.Name);
-            console.log(`✓ Successfully resolved ${recordId} to name: "${response.fields.Name}"`);
-          } else {
-            console.warn(`⚠️ No Name field found for record ${recordId} in table ${tableName}. Response fields:`, response?.fields);
-            resolvedNames.push(`Unknown-${recordId}`);
+          let name = '';
+          
+          // Use the correct field name based on the table
+          switch (tableName) {
+            case 'coffee_type':
+              name = response.fields?.variety || `Unknown-${recordId}`;
+              break;
+            case 'process':
+              name = response.fields?.title || `Unknown-${recordId}`;
+              break;
+            case 'suppliers':
+              const firstName = response.fields?.first_name || '';
+              const lastName = response.fields?.last_name || '';
+              const farmName = response.fields?.farm || '';
+              name = farmName || `${firstName} ${lastName}`.trim() || `Unknown-${recordId}`;
+              break;
+            case 'flavors':
+              name = response.fields?.title || `Unknown-${recordId}`;
+              break;
+            case 'origin':
+              name = response.fields?.title || `Unknown-${recordId}`;
+              break;
+            default:
+              name = response.fields?.Name || `Unknown-${recordId}`;
           }
+          
+          resolvedNames.push(name);
+          console.log(`✓ Successfully resolved ${recordId} to name: "${name}"`);
         } catch (recordError) {
           console.error(`❌ Error fetching record ${recordId} from ${tableName}:`, recordError);
           resolvedNames.push(`Error-${recordId}`);
