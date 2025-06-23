@@ -23,8 +23,8 @@ const OrderConfirmationModal = ({ isOpen, onClose, product }: OrderConfirmationM
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 relative">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 animate-fade-in">
+      <div className="bg-white rounded-lg p-8 max-w-md w-full mx-4 relative animate-scale-in">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
@@ -63,8 +63,8 @@ const OrderConfirmationModal = ({ isOpen, onClose, product }: OrderConfirmationM
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="100">100 grams OR 250 grams</SelectItem>
-                  <SelectItem value="250">250 grams</SelectItem>
+                  <SelectItem value="100">100 grams</SelectItem>
+                  <SelectItem value="200">200 grams</SelectItem>
                 </SelectContent>
               </Select>
             </div>

@@ -9,16 +9,34 @@ import OrderConfirmationModal from '../components/OrderConfirmationModal';
 const ProductDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data } = useAdvancedTable();
+  const { data, loading } = useAdvancedTable();
   const [showModal, setShowModal] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
+  // Find the product by ID
   const product = data.find(item => item.id === id);
+
+  console.log('Product ID from URL:', id);
+  console.log('Available products:', data);
+  console.log('Found product:', product);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-500">Loading...</p>
+      </div>
+    );
+  }
 
   if (!product) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <p className="text-gray-500">Product not found</p>
+        <div className="text-center">
+          <p className="text-gray-500 mb-4">Product not found</p>
+          <Button onClick={() => navigate('/')} variant="outline">
+            Back to Home
+          </Button>
+        </div>
       </div>
     );
   }
@@ -175,7 +193,7 @@ const ProductDetail = () => {
         2025 © Finca Market. All rights reserved
       </footer>
 
-      {/* Order Confirmation Modal */}
+      {/* Order Confirmation Modal with zoom-in animation */}
       <OrderConfirmationModal
         isOpen={showModal}
         onClose={() => setShowModal(false)}
