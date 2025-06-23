@@ -1,6 +1,7 @@
 
 import React, { useState } from 'react';
 import { Search, Filter, ChevronUp, ChevronDown, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -8,8 +9,8 @@ import { useAdvancedTable } from '../hooks/useAdvancedTable';
 import FilterPanel from './FilterPanel';
 
 const AdvancedTable = () => {
+  const navigate = useNavigate();
   const [showFilters, setShowFilters] = useState(false);
-  const [showSortMenu, setShowSortMenu] = useState(false);
   const {
     data,
     loading,
@@ -23,7 +24,6 @@ const AdvancedTable = () => {
     currentPage,
     setCurrentPage,
     totalPages,
-    totalItems,
     resetFilters,
     uniqueValues
   } = useAdvancedTable();
@@ -35,16 +35,17 @@ const AdvancedTable = () => {
       <ChevronDown className="h-4 w-4 inline ml-1" />;
   };
 
-  const getStatusButton = (status: string, price: number) => {
+  const getStatusButton = (status: string, product: any) => {
     const isRequested = status === 'Sample requested';
     return (
       <Button
         size="sm"
+        onClick={() => navigate(`/product/${product.id}`)}
         className={`${
           isRequested 
             ? 'bg-green-100 text-green-700 hover:bg-green-200' 
             : 'bg-purple-600 text-white hover:bg-purple-700'
-        } text-xs px-3 py-1`}
+        } text-xs px-4 py-2`}
       >
         {isRequested ? 'Sample requested' : 'Request Samples'}
       </Button>
@@ -55,9 +56,8 @@ const AdvancedTable = () => {
     const [key, direction] = value.split('-');
     handleSort(key as any);
     if (sortConfig.key === key && direction === 'desc') {
-      handleSort(key as any); // Toggle to desc
+      handleSort(key as any);
     }
-    setShowSortMenu(false);
   };
 
   if (loading) {
@@ -213,7 +213,7 @@ const AdvancedTable = () => {
                   <td className="px-6 py-4 text-sm text-gray-900">{item.stockKg.toLocaleString()}</td>
                   <td className="px-6 py-4 text-sm font-medium text-gray-900">${item.price}</td>
                   <td className="px-6 py-4">
-                    {getStatusButton(item.status, item.price)}
+                    {getStatusButton(item.status, item)}
                   </td>
                 </tr>
               ))}
