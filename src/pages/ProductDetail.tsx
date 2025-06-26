@@ -44,15 +44,11 @@ const ProductDetail = () => {
     );
   }
 
-  // Use the correct image from Airtable, fallback to placeholder if not available
+  // Use the correct image from coffee_type table, fallback to placeholder if not available
   const productImage = product.imageUrl || '/lovable-uploads/e10a1e6f-809e-4bd6-9eed-b9a73629fb0e.png';
   
-  // For demonstration, we'll create multiple views of the same image
-  const images = [
-    productImage,
-    '/lovable-uploads/51981cb7-98fe-4a41-9309-ff14384f1480.png',
-    '/lovable-uploads/3a836092-b484-4d42-9c7f-50d341dac042.png'
-  ];
+  // Create array with the main product image
+  const images = [productImage];
 
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
@@ -97,50 +93,30 @@ const ProductDetail = () => {
           <div className="space-y-4">
             <div className="relative bg-white rounded-2xl overflow-hidden border border-gray-100">
               <img 
-                src={images[currentImageIndex]} 
+                src={productImage} 
                 alt={`${product.variety} coffee beans`}
                 className="w-full h-96 object-cover"
                 onError={(e) => {
-                  console.error('Image failed to load:', images[currentImageIndex]);
+                  console.error('Image failed to load:', productImage);
                   e.currentTarget.src = '/lovable-uploads/e10a1e6f-809e-4bd6-9eed-b9a73629fb0e.png';
                 }}
               />
-              <button
-                onClick={prevImage}
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow"
-              >
-                <ChevronLeft className="h-5 w-5 text-gray-700" />
-              </button>
-              <button
-                onClick={nextImage}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow"
-              >
-                <ChevronRight className="h-5 w-5 text-gray-700" />
-              </button>
-            </div>
-            
-            {/* Thumbnail Images */}
-            <div className="flex space-x-3">
-              {images.map((img, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentImageIndex(index)}
-                  className={`w-20 h-20 rounded-xl overflow-hidden border-2 transition-all ${
-                    currentImageIndex === index 
-                      ? 'border-purple-500 ring-2 ring-purple-200' 
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <img 
-                    src={img} 
-                    alt={`${product.variety} thumbnail ${index + 1}`} 
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = '/lovable-uploads/e10a1e6f-809e-4bd6-9eed-b9a73629fb0e.png';
-                    }}
-                  />
-                </button>
-              ))}
+              {images.length > 1 && (
+                <>
+                  <button
+                    onClick={prevImage}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow"
+                  >
+                    <ChevronLeft className="h-5 w-5 text-gray-700" />
+                  </button>
+                  <button
+                    onClick={nextImage}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow"
+                  >
+                    <ChevronRight className="h-5 w-5 text-gray-700" />
+                  </button>
+                </>
+              )}
             </div>
           </div>
 

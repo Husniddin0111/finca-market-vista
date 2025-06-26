@@ -1,4 +1,3 @@
-
 export interface AirtableRecord {
   id: string;
   createdTime: string;
@@ -20,6 +19,7 @@ export interface AirtableRecord {
     'buyer gets'?: number;
     is_ready?: boolean;
     origin?: string[];
+    varietyImages?: string[];
   };
 }
 
@@ -234,7 +234,7 @@ export class AirtableService {
       stockKg: record.fields.stock_kg || 0,
       price: record.fields['Price FOB/lb'] || 0,
       status: record.fields.is_ready ? 'Sample requested' : 'Request Samples',
-      imageUrl: (record.fields as any).varietyImages?.[0] || ''
+      imageUrl: record.fields.varietyImages?.[0] || ''
     };
     
     console.log('Final transformed record for UI:', transformed);
