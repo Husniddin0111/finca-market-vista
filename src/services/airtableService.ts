@@ -31,12 +31,18 @@ export interface AirtableResponse {
 export interface LinkedRecord {
   id: string;
   fields: {
-    Name: string;
+    Name?: string;
+    variety?: string;
+    title?: string;
+    first_name?: string;
+    last_name?: string;
+    farm?: string;
+    image?: Array<{
+      id: string;
+      url: string;
+      filename: string;
+    }>;
   };
-}
-
-export interface LinkedRecordResponse {
-  records: LinkedRecord[];
 }
 
 export interface TransformedCoffeeRecord {
@@ -50,13 +56,34 @@ export interface TransformedCoffeeRecord {
   stockKg: number;
   price: number;
   status: string;
+  imageUrl?: string;
 }
 
 export class AirtableService {
   private baseUrl: string = 'https://api.airtable.com/v0/appnc5K3ijuJIrNqn';
   private apiKey: string = 'patlA5ApKpEDGVeWJ.a75203c8e393a2a95b4ef847004d1bbd700fc189f8b9f8e6a2474e7d4bbcca18';
+  private cache: Map<string, any> = new Map();
+  private cacheExpiry: Map<string, number> = new Map();
+  private readonly CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
+  private isValidCache(key: string): boolean {
+    const expiry = this.cacheExpiry.get(key);
+    return expiry ? Date.now() < expiry : false;
+  }
+
+  private setCache(key: string, data: any): void {
+    this.cache.set(key, data);
+    this.cacheExpiry.set(key, Date.now() + this.CACHE_DURATION);
+  }
 
   private async fetchFromAirtable(endpoint: string): Promise<any> {
+    const cacheKey = endpoint;
+    
+    if (this.isValidCache(cacheKey)) {
+      console.log(`Cache hit for: ${endpoint}`);
+      return this.cache.get(cacheKey);
+    }
+
     console.log(`Making request to: ${this.baseUrl}${endpoint}`);
     const response = await fetch(`${this.baseUrl}${endpoint}`, {
       headers: {
@@ -71,7 +98,8 @@ export class AirtableService {
     }
 
     const data = await response.json();
-    console.log(`Response data:`, data);
+    this.setCache(cacheKey, data);
+    console.log(`Response cached for: ${endpoint}`);
     return data;
   }
 
@@ -88,63 +116,35 @@ export class AirtableService {
       const response = await this.fetchFromAirtable(`/stock?${params}`);
       console.log('Raw Airtable response:', response);
       
-      // Resolve linked records for each stock record
+      // Batch resolve linked records for better performance
       const recordsWithResolvedLinks = await Promise.all(
         response.records.map(async (record: AirtableRecord) => {
-          console.log('Processing record:', record.id, record.fields);
           const resolvedFields = { ...record.fields };
 
-          // Resolve suppliers (from suppliers table)
-          if (record.fields.suppliers && Array.isArray(record.fields.suppliers) && record.fields.suppliers.length > 0) {
-            console.log('Original suppliers field:', record.fields.suppliers);
-            const supplierNames = await this.resolveLinkedRecords(record.fields.suppliers, 'suppliers');
-            console.log('Resolved supplier names:', supplierNames);
-            resolvedFields.suppliers = supplierNames;
-          }
+          // Resolve all linked records in parallel
+          const [suppliers, varieties, processes, origins, flavors] = await Promise.all([
+            this.resolveLinkedRecordsBatch(record.fields.suppliers, 'suppliers'),
+            this.resolveLinkedRecordsBatch(record.fields.variety, 'coffee_type'),
+            this.resolveLinkedRecordsBatch(record.fields.process, 'process'),
+            this.resolveLinkedRecordsBatch(record.fields.origin, 'origin'),
+            this.resolveLinkedRecordsBatch(record.fields.flavors, 'flavors')
+          ]);
 
-          // Resolve variety (from coffee_type table)
-          if (record.fields.variety && Array.isArray(record.fields.variety) && record.fields.variety.length > 0) {
-            console.log('Original variety field:', record.fields.variety);
-            const varietyNames = await this.resolveLinkedRecords(record.fields.variety, 'coffee_type');
-            console.log('Resolved variety names:', varietyNames);
-            resolvedFields.variety = varietyNames;
+          if (suppliers.length > 0) resolvedFields.suppliers = suppliers.map(s => s.name);
+          if (varieties.length > 0) {
+            resolvedFields.variety = varieties.map(v => v.name);
+            resolvedFields.varietyImages = varieties.map(v => v.imageUrl).filter(Boolean);
           }
+          if (processes.length > 0) resolvedFields.process = processes.map(p => p.name);
+          if (origins.length > 0) resolvedFields.origin = origins.map(o => o.name);
+          if (flavors.length > 0) resolvedFields.flavors = flavors.map(f => f.name);
 
-          // Resolve process (from process table)
-          if (record.fields.process && Array.isArray(record.fields.process) && record.fields.process.length > 0) {
-            console.log('Original process field:', record.fields.process);
-            const processNames = await this.resolveLinkedRecords(record.fields.process, 'process');
-            console.log('Resolved process names:', processNames);
-            resolvedFields.process = processNames;
-          }
-
-          // Resolve origin
-          if (record.fields.origin && Array.isArray(record.fields.origin) && record.fields.origin.length > 0) {
-            console.log('Original origin field:', record.fields.origin);
-            const originNames = await this.resolveLinkedRecords(record.fields.origin, 'origin');
-            console.log('Resolved origin names:', originNames);
-            resolvedFields.origin = originNames;
-          }
-
-          // Resolve flavors (from flavors table)
-          if (record.fields.flavors && Array.isArray(record.fields.flavors) && record.fields.flavors.length > 0) {
-            console.log('Original flavors field:', record.fields.flavors);
-            const flavorNames = await this.resolveLinkedRecords(record.fields.flavors, 'flavors');
-            console.log('Resolved flavor names:', flavorNames);
-            resolvedFields.flavors = flavorNames;
-          }
-
-          const finalRecord = {
+          return {
             ...record,
             fields: resolvedFields
           };
-          
-          console.log('Final processed record:', finalRecord);
-          return finalRecord;
         })
       );
-
-      console.log('All records with resolved links:', recordsWithResolvedLinks);
 
       return {
         ...response,
@@ -156,59 +156,67 @@ export class AirtableService {
     }
   }
 
-  private async resolveLinkedRecords(recordIds: string[], tableName: string): Promise<string[]> {
+  private async resolveLinkedRecordsBatch(recordIds: string[] | undefined, tableName: string): Promise<Array<{name: string, imageUrl?: string}>> {
+    if (!recordIds || !Array.isArray(recordIds) || recordIds.length === 0) {
+      return [];
+    }
+
     try {
-      console.log(`Starting to resolve linked records for table ${tableName} with IDs:`, recordIds);
-      
-      const resolvedNames: string[] = [];
-      
-      // Fetch each record individually to ensure we get the names
-      for (const recordId of recordIds) {
-        try {
-          console.log(`Fetching individual record ${recordId} from table ${tableName}`);
-          const response = await this.fetchFromAirtable(`/${tableName}/${recordId}`);
-          console.log(`Individual record response for ${recordId}:`, response);
+      const results = await Promise.all(
+        recordIds.map(async (recordId) => {
+          const cacheKey = `${tableName}/${recordId}`;
           
-          let name = '';
-          
-          // Use the correct field name based on the table
-          switch (tableName) {
-            case 'coffee_type':
-              name = response.fields?.variety || `Unknown-${recordId}`;
-              break;
-            case 'process':
-              name = response.fields?.title || `Unknown-${recordId}`;
-              break;
-            case 'suppliers':
-              const firstName = response.fields?.first_name || '';
-              const lastName = response.fields?.last_name || '';
-              const farmName = response.fields?.farm || '';
-              name = farmName || `${firstName} ${lastName}`.trim() || `Unknown-${recordId}`;
-              break;
-            case 'flavors':
-              name = response.fields?.title || `Unknown-${recordId}`;
-              break;
-            case 'origin':
-              name = response.fields?.title || `Unknown-${recordId}`;
-              break;
-            default:
-              name = response.fields?.Name || `Unknown-${recordId}`;
+          if (this.isValidCache(cacheKey)) {
+            return this.cache.get(cacheKey);
           }
-          
-          resolvedNames.push(name);
-          console.log(`✓ Successfully resolved ${recordId} to name: "${name}"`);
-        } catch (recordError) {
-          console.error(`❌ Error fetching record ${recordId} from ${tableName}:`, recordError);
-          resolvedNames.push(`Error-${recordId}`);
-        }
-      }
-      
-      console.log(`✓ Final resolved names for ${tableName}:`, resolvedNames);
-      return resolvedNames;
+
+          try {
+            const response = await this.fetchFromAirtable(`/${tableName}/${recordId}`);
+            
+            let name = '';
+            let imageUrl = '';
+            
+            switch (tableName) {
+              case 'coffee_type':
+                name = response.fields?.variety || `Unknown-${recordId}`;
+                // Get image from coffee_type table
+                if (response.fields?.image && Array.isArray(response.fields.image) && response.fields.image.length > 0) {
+                  imageUrl = response.fields.image[0].url;
+                }
+                break;
+              case 'process':
+                name = response.fields?.title || `Unknown-${recordId}`;
+                break;
+              case 'suppliers':
+                const firstName = response.fields?.first_name || '';
+                const lastName = response.fields?.last_name || '';
+                const farmName = response.fields?.farm || '';
+                name = farmName || `${firstName} ${lastName}`.trim() || `Unknown-${recordId}`;
+                break;
+              case 'flavors':
+                name = response.fields?.title || `Unknown-${recordId}`;
+                break;
+              case 'origin':
+                name = response.fields?.title || `Unknown-${recordId}`;
+                break;
+              default:
+                name = response.fields?.Name || `Unknown-${recordId}`;
+            }
+            
+            const result = { name, imageUrl };
+            this.setCache(cacheKey, result);
+            return result;
+          } catch (recordError) {
+            console.error(`Error fetching record ${recordId} from ${tableName}:`, recordError);
+            return { name: `Error-${recordId}`, imageUrl: '' };
+          }
+        })
+      );
+
+      return results;
     } catch (error) {
-      console.error(`❌ Error resolving linked records for table ${tableName}:`, error);
-      // Return original IDs as fallback
-      return recordIds;
+      console.error(`Error resolving linked records for table ${tableName}:`, error);
+      return recordIds.map(id => ({ name: id, imageUrl: '' }));
     }
   }
 
@@ -225,14 +233,14 @@ export class AirtableService {
       flavorsNotes: Array.isArray(record.fields.flavors) ? record.fields.flavors.join(', ') : 'N/A',
       stockKg: record.fields.stock_kg || 0,
       price: record.fields['Price FOB/lb'] || 0,
-      status: record.fields.is_ready ? 'Sample requested' : 'Request Samples'
+      status: record.fields.is_ready ? 'Sample requested' : 'Request Samples',
+      imageUrl: (record.fields as any).varietyImages?.[0] || ''
     };
     
     console.log('Final transformed record for UI:', transformed);
     return transformed;
   }
 
-  // Standalone function for fetching stock records with resolved linked fields
   async fetchStockRecordsWithLinkedData(): Promise<TransformedCoffeeRecord[]> {
     try {
       console.log('🚀 Starting fetchStockRecordsWithLinkedData...');
