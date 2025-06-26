@@ -1,3 +1,4 @@
+
 export interface AirtableRecord {
   id: string;
   createdTime: string;
@@ -185,12 +186,14 @@ export class AirtableService {
             switch (tableName) {
               case 'coffee_type':
                 name = response.fields?.variety || `Unknown-${recordId}`;
-                // Get image from coffee_type table
+                // Get image from coffee_type table - this is the key fix
                 if (response.fields?.image && Array.isArray(response.fields.image) && response.fields.image.length > 0) {
                   imageUrl = response.fields.image[0].url;
-                  console.log(`Found image for ${name}: ${imageUrl}`);
+                  console.log(`✅ FOUND IMAGE for ${name}: ${imageUrl}`);
                 } else {
-                  console.log(`No image found for ${name} in coffee_type record`);
+                  console.log(`❌ NO IMAGE found for ${name} in coffee_type record. Fields:`, response.fields);
+                  // Let's check what fields are available
+                  console.log(`Available fields in coffee_type record:`, Object.keys(response.fields || {}));
                 }
                 break;
               case 'process':
@@ -252,10 +255,11 @@ export class AirtableService {
     
     // Special logging for the Manabu product
     if (record.id === 'recaZzHjYaaFT3Lx9') {
-      console.log('🔍 MANABU PRODUCT DEBUG:');
+      console.log('🔍 MANABU PRODUCT DEBUG - ENHANCED:');
       console.log('Raw variety field:', record.fields.variety);
       console.log('Raw varietyImages field:', record.fields.varietyImages);
       console.log('Final imageUrl:', transformed.imageUrl);
+      console.log('All record fields:', record.fields);
     }
     
     return transformed;
