@@ -158,8 +158,11 @@ export class AirtableService {
 
   private async resolveLinkedRecordsBatch(recordIds: string[] | undefined, tableName: string): Promise<Array<{name: string, imageUrl?: string}>> {
     if (!recordIds || !Array.isArray(recordIds) || recordIds.length === 0) {
+      console.log(`No linked records found for table: ${tableName}`);
       return [];
     }
+
+    console.log(`Resolving ${recordIds.length} linked records for table: ${tableName}`, recordIds);
 
     try {
       const results = await Promise.all(
@@ -167,11 +170,14 @@ export class AirtableService {
           const cacheKey = `${tableName}/${recordId}`;
           
           if (this.isValidCache(cacheKey)) {
+            console.log(`Cache hit for ${tableName}/${recordId}`);
             return this.cache.get(cacheKey);
           }
 
           try {
+            console.log(`Fetching linked record: ${tableName}/${recordId}`);
             const response = await this.fetchFromAirtable(`/${tableName}/${recordId}`);
+            console.log(`Response for ${tableName}/${recordId}:`, response);
             
             let name = '';
             let imageUrl = '';
@@ -182,6 +188,9 @@ export class AirtableService {
                 // Get image from coffee_type table
                 if (response.fields?.image && Array.isArray(response.fields.image) && response.fields.image.length > 0) {
                   imageUrl = response.fields.image[0].url;
+                  console.log(`Found image for ${name}: ${imageUrl}`);
+                } else {
+                  console.log(`No image found for ${name} in coffee_type record`);
                 }
                 break;
               case 'process':
@@ -204,6 +213,7 @@ export class AirtableService {
             }
             
             const result = { name, imageUrl };
+            console.log(`Final result for ${tableName}/${recordId}:`, result);
             this.setCache(cacheKey, result);
             return result;
           } catch (recordError) {
@@ -213,6 +223,7 @@ export class AirtableService {
         })
       );
 
+      console.log(`Final results for ${tableName}:`, results);
       return results;
     } catch (error) {
       console.error(`Error resolving linked records for table ${tableName}:`, error);
@@ -221,7 +232,7 @@ export class AirtableService {
   }
 
   transformRecord(record: AirtableRecord): TransformedCoffeeRecord {
-    console.log('Transforming record with resolved fields:', record);
+    console.log(`Transforming record ${record.id} with resolved fields:`, record);
     
     const transformed = {
       id: record.id,
@@ -237,7 +248,16 @@ export class AirtableService {
       imageUrl: record.fields.varietyImages?.[0] || ''
     };
     
-    console.log('Final transformed record for UI:', transformed);
+    console.log(`Final transformed record for UI (ID: ${record.id}):`, transformed);
+    
+    // Special logging for the Manabu product
+    if (record.id === 'recaZzHjYaaFT3Lx9') {
+      console.log('🔍 MANABU PRODUCT DEBUG:');
+      console.log('Raw variety field:', record.fields.variety);
+      console.log('Raw varietyImages field:', record.fields.varietyImages);
+      console.log('Final imageUrl:', transformed.imageUrl);
+    }
+    
     return transformed;
   }
 

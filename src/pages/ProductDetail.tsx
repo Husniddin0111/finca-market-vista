@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, User } from 'lucide-react';
@@ -19,6 +18,13 @@ const ProductDetail = () => {
   console.log('Product ID from URL:', id);
   console.log('Available products:', data);
   console.log('Found product:', product);
+
+  // Special debugging for Manabu product
+  if (id === 'recaZzHjYaaFT3Lx9') {
+    console.log('🔍 MANABU PRODUCT DETAIL DEBUG:');
+    console.log('Product data:', product);
+    console.log('Product imageUrl:', product?.imageUrl);
+  }
 
   if (loading) {
     return (
@@ -46,6 +52,8 @@ const ProductDetail = () => {
 
   // Use the correct image from coffee_type table, fallback to placeholder if not available
   const productImage = product.imageUrl || '/lovable-uploads/e10a1e6f-809e-4bd6-9eed-b9a73629fb0e.png';
+  
+  console.log('Final productImage being displayed:', productImage);
   
   // Create array with the main product image
   const images = [productImage];
